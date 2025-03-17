@@ -9,7 +9,6 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
   const timeoutRef = useRef(null);
 
   useEffect(() => {
-    // Clear any existing timers when component updates
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
     }
@@ -17,19 +16,16 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
       clearTimeout(timeoutRef.current);
     }
 
-    // Reset progress
     setProgress(0);
 
     if (mediaItem.type === 'image' && !isPaused) {
-      // For images, set a 5-second timer and update progress
       progressInterval.current = setInterval(() => {
         setProgress((prevProgress) => {
-          const newProgress = prevProgress + 20; // 5 seconds total (100/5 = 20 per second)
+          const newProgress = prevProgress + 20;
           return newProgress;
         });
       }, 1000);
 
-      // After 5 seconds, trigger the next media
       timeoutRef.current = setTimeout(() => {
         if (onMediaComplete) {
           onMediaComplete();
@@ -44,7 +40,6 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
           clearTimeout(timeoutRef.current);
         }
       } else {
-        // For videos, play for 5 seconds then move to next
         const playPromise = videoRef.current.play();
         
         if (playPromise !== undefined) {
@@ -54,7 +49,6 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
           });
         }
 
-        // Set timeout to move to next media after 5 seconds
         timeoutRef.current = setTimeout(() => {
           if (onMediaComplete) {
             onMediaComplete();
@@ -64,7 +58,6 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
     }
 
     return () => {
-      // Clean up timers when component unmounts or updates
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
       }
@@ -76,7 +69,6 @@ const LookPreview = ({ mediaItem, isMuted, isPaused, onMediaComplete }) => {
 
   const handleVideoTimeUpdate = () => {
     if (videoRef.current && !videoError) {
-      // Calculate progress based on 5 seconds max duration
       const currentTime = videoRef.current.currentTime;
       const calculatedProgress = (currentTime / 5) * 100;
       setProgress(Math.min(calculatedProgress, 100));

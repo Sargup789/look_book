@@ -14,6 +14,7 @@ const Lookbook = ({ looks }) => {
   const [likedLooks, setLikedLooks] = useState({});
   const [savedLooks, setSavedLooks] = useState({});
   const [showProducts, setShowProducts] = useState(false);
+  const [isLegendVisible, setIsLegendVisible] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -36,7 +37,6 @@ const Lookbook = ({ looks }) => {
     if (currentMediaIndex < currentLook.mediaItems.length - 1) {
       setCurrentMediaIndex(prev => prev + 1);
     } else {
-      // If we're at the last media item, go to the next look
       handleNextLook();
     }
   };
@@ -45,10 +45,8 @@ const Lookbook = ({ looks }) => {
     if (currentMediaIndex > 0) {
       setCurrentMediaIndex(prev => prev - 1);
     } else {
-      // If we're at the first media item, go to the previous look
       if (currentLookIndex > 0) {
         setCurrentLookIndex(prev => prev - 1);
-        // Set to the last media item of the previous look
         setCurrentMediaIndex(looks[currentLookIndex - 1].mediaItems.length - 1);
       }
     }
@@ -94,6 +92,10 @@ const Lookbook = ({ looks }) => {
     setShowProducts(prev => !prev);
   };
 
+  const handleLegendToggle = (isVisible) => {
+    setIsLegendVisible(isVisible);
+  };
+
   const currentLook = looks && looks.length > 0 ? looks[currentLookIndex] : null;
   const currentMedia = currentLook && currentLook.mediaItems && currentLook.mediaItems.length > 0 
     ? currentLook.mediaItems[currentMediaIndex] 
@@ -101,7 +103,6 @@ const Lookbook = ({ looks }) => {
   const isLiked = likedLooks[currentLook?.id] || false;
   const isSaved = savedLooks[currentLook?.id] || false;
 
-  // Calculate progress indicators for media items
   const progressIndicators = currentLook && currentLook.mediaItems 
     ? currentLook.mediaItems.map((_, index) => ({
         isActive: index === currentMediaIndex,
@@ -137,7 +138,6 @@ const Lookbook = ({ looks }) => {
       }}
       {...handlers}
     >
-      {/* Header */}
       <Box
         sx={{
           position: 'absolute',
@@ -161,7 +161,6 @@ const Lookbook = ({ looks }) => {
         </IconButton>
       </Box>
 
-      {/* Progress Indicators */}
       <Box
         sx={{
           position: 'absolute',
@@ -211,70 +210,72 @@ const Lookbook = ({ looks }) => {
             <ProductAnnotation
               annotations={currentMedia.annotations}
               products={currentLook.products}
+              onLegendToggle={handleLegendToggle}
             />
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Controls */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 80,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 2,
-          zIndex: 2,
-        }}
-      >
-        <IconButton
-          onClick={handlePrevMedia}
-          sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
-          disabled={currentMediaIndex === 0 && currentLookIndex === 0}
+      {!isLegendVisible && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 80,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
+            zIndex: 2,
+          }}
         >
-          <ChevronLeft />
-        </IconButton>
-        <IconButton
-          onClick={handleNextMedia}
-          sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
-          disabled={!currentLook || !currentLook.mediaItems || (currentMediaIndex === currentLook.mediaItems.length - 1 && currentLookIndex === looks.length - 1)}
-        >
-          <ChevronRight />
-        </IconButton>
-      </Box>
+          <IconButton
+            onClick={handlePrevMedia}
+            sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            disabled={currentMediaIndex === 0 && currentLookIndex === 0}
+          >
+            <ChevronLeft />
+          </IconButton>
+          <IconButton
+            onClick={handleNextMedia}
+            sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            disabled={!currentLook || !currentLook.mediaItems || (currentMediaIndex === currentLook.mediaItems.length - 1 && currentLookIndex === looks.length - 1)}
+          >
+            <ChevronRight />
+          </IconButton>
+        </Box>
+      )}
 
-      {/* Look Navigation */}
-      <Box
-        sx={{
-          position: 'absolute',
-          right: 20,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          zIndex: 2,
-        }}
-      >
-        <IconButton
-          onClick={handlePrevLook}
-          sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
-          disabled={currentLookIndex === 0}
+      {!isLegendVisible && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 20,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            zIndex: 2,
+          }}
         >
-          <ChevronRight sx={{ transform: 'rotate(90deg)' }} />
-        </IconButton>
-        <IconButton
-          onClick={handleNextLook}
-          sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
-          disabled={currentLookIndex === looks.length - 1}
-        >
-          <ChevronLeft sx={{ transform: 'rotate(90deg)' }} />
-        </IconButton>
-      </Box>
+          <IconButton
+            onClick={handlePrevLook}
+            sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            disabled={currentLookIndex === 0}
+          >
+            <ChevronRight sx={{ transform: 'rotate(90deg)' }} />
+          </IconButton>
+          <IconButton
+            onClick={handleNextLook}
+            sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            disabled={currentLookIndex === looks.length - 1}
+          >
+            <ChevronLeft sx={{ transform: 'rotate(90deg)' }} />
+          </IconButton>
+        </Box>
+      )}
 
-      {/* Engagement Controls */}
       <Box
         sx={{
           position: 'absolute',
@@ -308,33 +309,33 @@ const Lookbook = ({ looks }) => {
         </IconButton>
       </Box>
 
-      {/* View Products Button */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 20,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          p: 2,
-          zIndex: 2,
-        }}
-      >
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={toggleProductsPanel}
+      {!isLegendVisible && (
+        <Box
           sx={{
-            borderRadius: 4,
-            px: 4,
+            position: 'absolute',
+            bottom: 20,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            p: 2,
+            zIndex: 2,
           }}
         >
-          {showProducts ? 'Hide Products' : 'View Products'}
-        </Button>
-      </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={toggleProductsPanel}
+            sx={{
+              borderRadius: 4,
+              px: 4,
+            }}
+          >
+            {showProducts ? 'Hide Products' : 'View Products'}
+          </Button>
+        </Box>
+      )}
 
-      {/* Products Panel */}
       <Fade in={showProducts}>
         <Box
           sx={{

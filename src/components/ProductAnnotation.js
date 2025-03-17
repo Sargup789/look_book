@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -9,20 +9,57 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Info } from '@mui/icons-material';
+import { Info, Close } from '@mui/icons-material';
 
-const ProductAnnotation = ({ annotations, products }) => {
+const ProductAnnotation = ({ annotations, products, onLegendToggle }) => {
   const [showLegend, setShowLegend] = useState(false);
+  const [highlightedProductId, setHighlightedProductId] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const productRefs = useRef({});
 
   const getProductById = (productId) => {
     return products.find((product) => product.id === productId);
   };
 
+  const handleAnnotationClick = (productId) => {
+    setHighlightedProductId(productId);
+    
+    if (!showLegend) {
+      toggleLegend(true);
+    }
+    
+    setTimeout(() => {
+      if (productRefs.current[productId]) {
+        productRefs.current[productId].scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    if (highlightedProductId && showLegend && productRefs.current[highlightedProductId]) {
+      productRefs.current[highlightedProductId].scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [highlightedProductId, showLegend]);
+
+  const toggleLegend = (value) => {
+    const newState = typeof value === 'boolean' ? value : !showLegend;
+    setShowLegend(newState);
+    if (onLegendToggle) {
+      onLegendToggle(newState);
+    }
+  };
+
   return (
     <>
-      {/* Product Dots */}
       {annotations.map((annotation) => {
         const product = getProductById(annotation.productId);
         if (!product) return null;
@@ -53,15 +90,14 @@ const ProductAnnotation = ({ annotations, products }) => {
                   transform: 'translate(-50%, -50%) scale(1.2)',
                 },
               }}
-              onClick={() => window.open(product.productUrl, '_blank')}
+              onClick={() => handleAnnotationClick(product.id)}
             />
           </Tooltip>
         );
       })}
 
-      {/* Legend Toggle Button */}
       <IconButton
-        onClick={() => setShowLegend(!showLegend)}
+        onClick={() => toggleLegend()}
         sx={{
           position: 'absolute',
           top: 20,
@@ -74,7 +110,6 @@ const ProductAnnotation = ({ annotations, products }) => {
         <Info />
       </IconButton>
 
-      {/* Product Legend */}
       {showLegend && (
         <Paper
           sx={{
@@ -85,15 +120,37 @@ const ProductAnnotation = ({ annotations, products }) => {
             p: 2,
             bgcolor: 'rgba(0,0,0,0.8)',
             color: 'white',
-            maxHeight: isMobile ? '30vh' : '40vh',
-            overflowY: 'auto',
+            maxHeight: isMobile ? '20vh' : '30vh',
             zIndex: 2,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            Products in this Look
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">
+              Products in this Look
+            </Typography>
+            <IconButton onClick={() => toggleLegend(false)} sx={{ color: 'white' }}>
+              <Close />
+            </IconButton>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              display: 'flex',
+              overflowX: 'auto',
+              gap: 2,
+              pb: 1,
+              '&::-webkit-scrollbar': {
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(255,255,255,0.1)',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(255,255,255,0.5)',
+                borderRadius: '4px',
+              },
+            }}
+          >
             {annotations.map((annotation) => {
               const product = getProductById(annotation.productId);
               if (!product) return null;
@@ -101,11 +158,17 @@ const ProductAnnotation = ({ annotations, products }) => {
               return (
                 <Box
                   key={annotation.id}
+                  ref={el => productRefs.current[product.id] = el}
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
+                    flexDirection: 'column',
+                    minWidth: '180px',
+                    maxWidth: '200px',
+                    flex: '0 0 auto',
                     cursor: 'pointer',
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: highlightedProductId === product.id ? 'rgba(255,255,255,0.2)' : 'transparent',
                     '&:hover': {
                       bgcolor: 'rgba(255,255,255,0.1)',
                     },
@@ -117,23 +180,27 @@ const ProductAnnotation = ({ annotations, products }) => {
                     src={product.imageUrl}
                     alt={product.name}
                     sx={{
-                      width: 40,
-                      height: 40,
+                      width: '100%',
+                      height: 120,
                       objectFit: 'cover',
                       borderRadius: 1,
+                      mb: 1,
                     }}
                   />
-                  <Box>
-                    <Typography variant="subtitle2">{product.name}</Typography>
-                    <Typography variant="body2">${product.price}</Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => window.open(product.productUrl, '_blank')}
-                    >
-                      Shop
-                    </Button>
-                  </Box>
+                  <Typography variant="subtitle2" noWrap>{product.name}</Typography>
+                  <Typography variant="body2" mb={1}>${product.price}</Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    fullWidth
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(product.productUrl, '_blank');
+                    }}
+                  >
+                    Shop
+                  </Button>
                 </Box>
               );
             })}
